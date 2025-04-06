@@ -1,0 +1,41 @@
+import React, { useState } from 'react';
+import ChatBody from './ChatBody';
+import ChatFooter from './ChatFooter';
+
+interface Message {
+  text: string;
+  isSent: boolean;
+}
+
+interface ChatProps {
+  // Add props here as needed
+}
+
+const Chat: React.FC<ChatProps> = () => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  
+  const handleSendMessage = (message: string) => {
+    setMessages([...messages, { text: message, isSent: true }]);
+    // Here you would typically also send the message to your backend
+    
+    // Simulate a response after 1 second
+    setTimeout(() => {
+      setMessages(prev => [...prev, { 
+        text: `You said: "${message}"`, 
+        isSent: false 
+      }]);
+    }, 1000);
+  };
+  
+  return (
+    <div className="flex flex-col w-full h-full flex-1">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex flex-col flex-1">
+        <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white h-full">Chat</h2>
+        <ChatBody messages={messages} />
+        <ChatFooter onSendMessage={handleSendMessage} />
+      </div>
+    </div>
+  );
+};
+
+export default Chat; 
