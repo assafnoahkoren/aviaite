@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import UserMessage from './UserMessage';
 import BotMessage from './BotMessage';
 import './ChatBody.scss';
@@ -13,9 +13,17 @@ interface ChatBodyProps {
 }
 
 const ChatBody: React.FC<ChatBodyProps> = ({ messages = [] }) => {
+  const chatBodyRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (chatBodyRef.current) {
+      chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
+    }
+  }, [messages]);
+
   return (
     <div className="chat-container">
-      <div className="chat-body hide-scrollbar">
+      <div className="chat-body hide-scrollbar" ref={chatBodyRef} style={{ scrollBehavior: 'smooth' }}>
         {messages.length === 0 ? (
           <>
             {/* Placeholder message examples */}
