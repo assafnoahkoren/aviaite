@@ -29,7 +29,7 @@ const Chat: React.FC<ChatProps> = () => {
   
   return (
     <div className="flex flex-col w-full h-full flex-1">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex flex-col flex-1">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow flex flex-col flex-1">
         <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white h-full">Chat</h2>
         <ChatBody messages={messages} />
         <ChatFooter onSendMessage={handleSendMessage} />

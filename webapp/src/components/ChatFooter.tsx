@@ -17,7 +17,7 @@ const ChatFooter: React.FC<ChatFooterProps> = ({ onSendMessage }) => {
   };
   
   return (
-    <div className="chat-footer mt-3">
+    <div className="chat-footer py-3 px-2">
       <form onSubmit={handleSubmit} className="flex gap-2">
         <input
           type="text"

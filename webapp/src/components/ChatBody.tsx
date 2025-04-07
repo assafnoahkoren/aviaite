@@ -1,6 +1,7 @@
 import React from 'react';
 import UserMessage from './UserMessage';
 import BotMessage from './BotMessage';
+import './ChatBody.scss';
 
 interface Message {
   text: string;
@@ -13,8 +14,8 @@ interface ChatBodyProps {
 
 const ChatBody: React.FC<ChatBodyProps> = ({ messages = [] }) => {
   return (
-    <div className="chat-container flex-1 relative overflow-hidden">
-      <div className="chat-body absolute inset-0 flex flex-col gap-3 overflow-y-auto p-2">
+    <div className="chat-container">
+      <div className="chat-body hide-scrollbar">
         {messages.length === 0 ? (
           <>
             {/* Placeholder message examples */}
@@ -31,6 +32,8 @@ const ChatBody: React.FC<ChatBodyProps> = ({ messages = [] }) => {
           </>
         )}
       </div>
+      {/* Gradient overlay for seamless scrolling effect */}
+      <div className="gradient-overlay"></div>
     </div>
   );
 };
