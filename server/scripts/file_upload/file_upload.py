@@ -6,9 +6,11 @@ import argparse
 import PyPDF2
 import re
 import json
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Any
 import mimetypes
 from dataclasses import dataclass
+import numpy as np
+from sentence_transformers import SentenceTransformer
 
 # Add the server directory to Python path so we can import the postgres client
 server_dir = Path(__file__).resolve().parents[2]
@@ -24,6 +26,7 @@ class ProcessedDocument:
     """Class to hold processed document data and metadata"""
     chunks: List[str]  # The actual text chunks
     chunks_metadata: List[Dict[str, any]]  # Metadata for each chunk
+    chunks_embeddings: List[np.ndarray]  # Embeddings for each chunk
     metadata: Dict[str, any]  # Metadata about the document
     original_file: Path  # Path to original file
 
@@ -272,6 +275,35 @@ def extract_metadata(file_path: Path) -> Dict[str, any]:
     
     return metadata
 
+def generate_embeddings(chunks: List[str], model_name: str = 'BAAI/bge-large-en-v1.5') -> List[np.ndarray]:
+    """
+    Generate embeddings for text chunks using sentence-transformers.
+    The BAAI/bge-large-en-v1.5 model produces 1024-dimensional embeddings,
+    which we pad to 1536 dimensions to match OpenAI's format.
+    
+    Args:
+        chunks (List[str]): List of text chunks to embed
+        model_name (str): Name of the sentence-transformers model to use
+        
+    Returns:
+        List[np.ndarray]: List of embeddings as numpy arrays with 1536 dimensions
+    """
+    model = SentenceTransformer(model_name)
+    embeddings = model.encode(chunks, show_progress_bar=True)
+    
+    # Pad embeddings from 1024 to 1536 dimensions
+    padded_embeddings = []
+    for embedding in embeddings:
+        # Normalize the original embedding
+        normalized = embedding / np.linalg.norm(embedding)
+        # Pad with zeros to reach 1536 dimensions
+        padded = np.pad(normalized, (0, 1536 - len(normalized)), 'constant')
+        # Normalize again to ensure unit length
+        padded = padded / np.linalg.norm(padded)
+        padded_embeddings.append(padded)
+    
+    return padded_embeddings
+
 def preprocess_document(file_path: Path, chunk_size: int = 1000, overlap: int = 100) -> ProcessedDocument:
     """
     Preprocess a document for RAG.
@@ -298,12 +330,18 @@ def preprocess_document(file_path: Path, chunk_size: int = 1000, overlap: int = 
     # Split into chunks and get chunk metadata
     chunks, chunks_metadata = chunk_text(cleaned_text, page_info, chunk_size, overlap)
     
+    # Generate embeddings for chunks
+    print("Generating embeddings...")
+    chunks_embeddings = generate_embeddings(chunks)
+    print(f"Generated {len(chunks_embeddings)} embeddings of dimension {chunks_embeddings[0].shape[0]}")
+    
     # Extract metadata
     metadata = extract_metadata(file_path)
     
     return ProcessedDocument(
         chunks=chunks,
         chunks_metadata=chunks_metadata,
+        chunks_embeddings=chunks_embeddings,
         metadata=metadata,
         original_file=file_path
     )
@@ -317,17 +355,24 @@ def save_chunks_to_db(processed_doc: ProcessedDocument, postgres_client: Postgre
         postgres_client (PostgresClient): PostgreSQL client instance
     """
     try:
-        # Prepare values for insertion - convert metadata to JSON string
-        values = [(chunk, json.dumps(metadata)) for chunk, metadata in zip(processed_doc.chunks, processed_doc.chunks_metadata)]
+        # Prepare values for insertion - convert metadata to JSON string and embeddings to list
+        values = [
+            (chunk, json.dumps(metadata), embedding.tolist()) 
+            for chunk, metadata, embedding in zip(
+                processed_doc.chunks, 
+                processed_doc.chunks_metadata, 
+                processed_doc.chunks_embeddings
+            )
+        ]
         
         # SQL query template
         insert_query = """
-            INSERT INTO chunks (chunk_text, metadata)
+            INSERT INTO chunks (chunk_text, metadata, embedding)
             VALUES %s
         """
         
-        # Template for execute_values - using positional parameters
-        template = "(%s, %s::jsonb)"
+        # Template for execute_values - using positional parameters for 1536-dimensional vectors
+        template = "(%s, %s::jsonb, %s::vector(1536))"
         
         postgres_client.execute_values(insert_query, values, template=template)
         print(f"✅ Successfully saved {len(values)} chunks to database")
