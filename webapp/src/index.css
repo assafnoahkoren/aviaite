@@ -8,12 +8,15 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   width: 100%;
-  min-height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 html {
   font-size: 16px;
   /* Base font size for mobile */
+  height: 100dvh;
+  overflow: hidden;
 }
 
 /* Mobile-first media queries */

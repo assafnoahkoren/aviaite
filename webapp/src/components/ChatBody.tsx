@@ -23,7 +23,7 @@ const ChatBody: React.FC<ChatBodyProps> = ({ messages = [] }) => {
 
   return (
     <div className="chat-container">
-      <div className="chat-body hide-scrollbar" ref={chatBodyRef} style={{ scrollBehavior: 'smooth' }}>
+      <div className="chat-body hide-scrollbar" ref={chatBodyRef}>
         {messages.length === 0 ? (
           <>
             {/* Placeholder message examples */}

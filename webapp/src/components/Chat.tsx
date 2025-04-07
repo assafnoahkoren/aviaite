@@ -29,10 +29,12 @@ const Chat: React.FC<ChatProps> = () => {
   };
   
   return (
-    <div className="flex flex-col w-full h-full flex-1">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow flex flex-col flex-1">
+    <div className="flex flex-col w-full h-dvh">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow flex flex-col h-full">
         <ChatHeader />
-        <ChatBody messages={messages} />
+        <div className="flex-1 overflow-hidden">
+          <ChatBody messages={messages} />
+        </div>
         <ChatFooter onSendMessage={handleSendMessage} />
       </div>
     </div>
