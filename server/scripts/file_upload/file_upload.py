@@ -5,7 +5,8 @@ from dotenv import load_dotenv
 import argparse
 import PyPDF2
 import re
-from typing import List, Dict, Optional
+import json
+from typing import List, Dict, Optional, Tuple
 import mimetypes
 from dataclasses import dataclass
 
@@ -22,6 +23,7 @@ from src.postgres_client import PostgresClient
 class ProcessedDocument:
     """Class to hold processed document data and metadata"""
     chunks: List[str]  # The actual text chunks
+    chunks_metadata: List[Dict[str, any]]  # Metadata for each chunk
     metadata: Dict[str, any]  # Metadata about the document
     original_file: Path  # Path to original file
 
@@ -64,26 +66,44 @@ def print_file_size(file: Path) -> None:
 	
 	print(f"File size: {convert_size(file_size)}")
         
-def extract_text_from_pdf(file_path: Path) -> str:
+def extract_text_from_pdf(file_path: Path) -> Tuple[str, List[Dict[str, any]]]:
     """
-    Extract text from a PDF file.
+    Extract text from a PDF file and track page information.
     
     Args:
         file_path (Path): Path to the PDF file
         
     Returns:
-        str: Extracted text from the PDF
+        Tuple[str, List[Dict[str, any]]]: Tuple containing:
+            - Extracted text
+            - List of page information dictionaries
     """
     text = ""
+    page_info = []
+    current_position = 0
+    
     try:
         with open(file_path, 'rb') as file:
             pdf_reader = PyPDF2.PdfReader(file)
-            for page in pdf_reader.pages:
-                text += page.extract_text() + "\n"
+            for page_num, page in enumerate(pdf_reader.pages, 1):
+                page_text = page.extract_text()
+                if page_text:
+                    # Store page information
+                    page_info.append({
+                        'page_number': page_num,
+                        'start_char': current_position,
+                        'end_char': current_position + len(page_text),
+                        'page_size': page.mediabox,
+                        'page_text_length': len(page_text)
+                    })
+                    # Add page text to full text
+                    text += page_text + "\n"
+                    current_position = len(text)
     except Exception as e:
         print(f"❌ Error extracting text from PDF: {e}")
         raise
-    return text
+    
+    return text, page_info
 
 def clean_text(text: str) -> str:
     """
@@ -106,21 +126,66 @@ def clean_text(text: str) -> str:
     
     return text.strip()
 
-def chunk_text(text: str, chunk_size: int = 1000, overlap: int = 100) -> List[str]:
+def get_page_info_for_chunk(start_char: int, end_char: int, page_info: List[Dict[str, any]]) -> Dict[str, any]:
     """
-    Split text into overlapping chunks.
+    Get page information for a specific chunk based on character positions.
+    
+    Args:
+        start_char (int): Start character position of the chunk
+        end_char (int): End character position of the chunk
+        page_info (List[Dict[str, any]]): List of page information dictionaries
+        
+    Returns:
+        Dict[str, any]: Dictionary containing page information for the chunk
+    """
+    chunk_pages = []
+    chunk_page_ranges = []
+    
+    for page in page_info:
+        page_start = page['start_char']
+        page_end = page['end_char']
+        
+        # Check if chunk overlaps with this page
+        if start_char < page_end and end_char > page_start:
+            chunk_pages.append(page['page_number'])
+            
+            # Calculate the relative positions within the page
+            chunk_start_in_page = max(0, start_char - page_start)
+            chunk_end_in_page = min(page['page_text_length'], end_char - page_start)
+            
+            chunk_page_ranges.append({
+                'page_number': page['page_number'],
+                'start_in_page': chunk_start_in_page,
+                'end_in_page': chunk_end_in_page,
+                'page_text_length': page['page_text_length']
+            })
+    
+    return {
+        'pages': chunk_pages,
+        'page_ranges': chunk_page_ranges,
+        'spans_multiple_pages': len(chunk_pages) > 1
+    }
+
+def chunk_text(text: str, page_info: List[Dict[str, any]], chunk_size: int = 1000, overlap: int = 100) -> tuple[List[str], List[Dict[str, any]]]:
+    """
+    Split text into overlapping chunks and generate metadata for each chunk.
     
     Args:
         text (str): Text to split into chunks
+        page_info (List[Dict[str, any]]): List of page information dictionaries
         chunk_size (int): Maximum size of each chunk
         overlap (int): Number of characters to overlap between chunks
         
     Returns:
-        List[str]: List of text chunks
+        tuple[List[str], List[Dict[str, any]]]: Tuple containing:
+            - List of text chunks
+            - List of metadata dictionaries for each chunk
     """
     chunks = []
+    chunks_metadata = []
     start = 0
     text_length = len(text)
+    chunk_index = 0
 
     while start < text_length:
         # Find the end of the chunk
@@ -139,13 +204,37 @@ def chunk_text(text: str, chunk_size: int = 1000, overlap: int = 100) -> List[st
                 last_match = matches[-1]
                 end = overlap_start + last_match.end()
         
-        # Add the chunk to our list
-        chunks.append(text[start:end].strip())
+        # Get the chunk text
+        chunk_text = text[start:end].strip()
+        
+        # Get page information for this chunk
+        page_info_for_chunk = get_page_info_for_chunk(start, end, page_info)
+        
+        # Create metadata for this chunk
+        chunk_metadata = {
+            'chunk_index': chunk_index,
+            'start_char': start,
+            'end_char': end,
+            'chunk_size': len(chunk_text),
+            'num_sentences': len(re.findall(r'[.!?]\s', chunk_text)) + 1,
+            'num_words': len(chunk_text.split()),
+            'is_first_chunk': chunk_index == 0,
+            'is_last_chunk': end >= text_length,
+            # Add page information
+            'pages': page_info_for_chunk['pages'],
+            'page_ranges': page_info_for_chunk['page_ranges'],
+            'spans_multiple_pages': page_info_for_chunk['spans_multiple_pages']
+        }
+        
+        # Add to our lists
+        chunks.append(chunk_text)
+        chunks_metadata.append(chunk_metadata)
         
         # Move the start pointer, ensuring we don't go backwards
         start = min(end, start + chunk_size - overlap)
+        chunk_index += 1
     
-    return chunks
+    return chunks, chunks_metadata
 
 def extract_metadata(file_path: Path) -> Dict[str, any]:
     """
@@ -199,25 +288,53 @@ def preprocess_document(file_path: Path, chunk_size: int = 1000, overlap: int = 
     mime_type = mimetypes.guess_type(file_path)[0]
     
     if mime_type == 'application/pdf':
-        text = extract_text_from_pdf(file_path)
+        text, page_info = extract_text_from_pdf(file_path)
     else:
         raise ValueError(f"Unsupported file type: {mime_type}")
     
     # Clean the text
     cleaned_text = clean_text(text)
     
-    # Split into chunks
-    chunks = chunk_text(cleaned_text, chunk_size, overlap)
+    # Split into chunks and get chunk metadata
+    chunks, chunks_metadata = chunk_text(cleaned_text, page_info, chunk_size, overlap)
     
     # Extract metadata
     metadata = extract_metadata(file_path)
     
     return ProcessedDocument(
         chunks=chunks,
+        chunks_metadata=chunks_metadata,
         metadata=metadata,
         original_file=file_path
     )
         
+def save_chunks_to_db(processed_doc: ProcessedDocument, postgres_client: PostgresClient) -> None:
+    """
+    Save chunks and their metadata to the database.
+    
+    Args:
+        processed_doc (ProcessedDocument): Processed document containing chunks and metadata
+        postgres_client (PostgresClient): PostgreSQL client instance
+    """
+    try:
+        # Prepare values for insertion - convert metadata to JSON string
+        values = [(chunk, json.dumps(metadata)) for chunk, metadata in zip(processed_doc.chunks, processed_doc.chunks_metadata)]
+        
+        # SQL query template
+        insert_query = """
+            INSERT INTO chunks (chunk_text, metadata)
+            VALUES %s
+        """
+        
+        # Template for execute_values - using positional parameters
+        template = "(%s, %s::jsonb)"
+        
+        postgres_client.execute_values(insert_query, values, template=template)
+        print(f"✅ Successfully saved {len(values)} chunks to database")
+    except Exception as e:
+        print(f"❌ Error saving chunks to database: {e}")
+        raise
+
 def main(file_path: str):
     """
     Process and upload a file to PostgreSQL.
@@ -237,11 +354,14 @@ def main(file_path: str):
         print(f"- Number of chunks: {len(processed_doc.chunks)}")
         print(f"- Average chunk size: {sum(len(c) for c in processed_doc.chunks) / len(processed_doc.chunks):.0f} characters")
         print(f"- Metadata extracted: {list(processed_doc.metadata.keys())}")
+        print(f"- Chunk metadata includes: {list(processed_doc.chunks_metadata[0].keys())}")
         
-        # TODO: Add embedding generation and database upload
+        # Save chunks to database
+        postgres_client = PostgresClient()
+        save_chunks_to_db(processed_doc, postgres_client)
         
     except Exception as e:
-        print(f"❌ Error during preprocessing: {e}")
+        print(f"❌ Error during processing: {e}")
         raise
 
 if __name__ == "__main__":

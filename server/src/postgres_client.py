@@ -1,7 +1,7 @@
 import os
 import psycopg2
-from psycopg2.extras import RealDictCursor
-from typing import Optional, Dict, List, Any
+from psycopg2.extras import RealDictCursor, execute_values
+from typing import Optional, Dict, List, Any, Sequence
 
 class PostgresClient:
     def __init__(self, 
@@ -63,6 +63,28 @@ class PostgresClient:
                 self.conn.rollback()
             raise Exception(f"Error executing query: {str(e)}")
 
+    def execute_values(self, query: str, values: Sequence[tuple], template: Optional[str] = None, page_size: int = 100) -> None:
+        """
+        Execute a query with multiple rows of values using psycopg2.extras.execute_values.
+        
+        Args:
+            query (str): SQL query template with %s for the values clause
+            values (Sequence[tuple]): Sequence of value tuples to insert
+            template (str, optional): Optional template string for formatting values
+            page_size (int): Number of rows to insert in each batch
+        """
+        try:
+            if not self.conn or self.conn.closed:
+                self.connect()
+            
+            execute_values(self.cursor, query, values, template, page_size)
+            self.conn.commit()
+                
+        except Exception as e:
+            if self.conn:
+                self.conn.rollback()
+            raise Exception(f"Error executing values: {str(e)}")
+
     def __enter__(self):
         """Context manager enter method."""
         self.connect()
@@ -74,4 +96,6 @@ class PostgresClient:
 
 # Example usage:
 # with PostgresClient() as db:
-#     results = db.execute_query("SELECT * FROM your_table WHERE column = %s", ('value',)) 
+#     results = db.execute_query("SELECT * FROM your_table WHERE column = %s", ('value',))
+#     # For bulk inserts:
+#     db.execute_values("INSERT INTO table (col1, col2) VALUES %s", [(1, 'a'), (2, 'b')]) 
