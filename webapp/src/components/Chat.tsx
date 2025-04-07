@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import ChatBody from './ChatBody';
 import ChatFooter from './ChatFooter';
 import ChatHeader from './ChatHeader';
+import { SemanticSearchService } from '../services/semanticSearchService';
+import type { SemanticSearchResponse } from '../types/semanticSearch';
 
 interface Message {
   text: string;
   isSent: boolean;
+  searchResults?: SemanticSearchResponse;
 }
 
 interface ChatProps {
@@ -14,18 +17,33 @@ interface ChatProps {
 
 const Chat: React.FC<ChatProps> = () => {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   
-  const handleSendMessage = (message: string) => {
-    setMessages([...messages, { text: message, isSent: true }]);
-    // Here you would typically also send the message to your backend
-    
-    // Simulate a response after 1 second
-    setTimeout(() => {
+  const handleSendMessage = async (message: string) => {
+    // Add user message
+    setMessages(prev => [...prev, { text: message, isSent: true }]);
+    setIsLoading(true);
+
+    try {
+      // Get semantic search results
+      const searchResults = await SemanticSearchService.search(message);
+      
+      // Add bot response with search results
       setMessages(prev => [...prev, { 
-        text: `You said: "${message}"`, 
+        text: searchResults.analysis.answer || "I couldn't find a specific answer to your question.", 
+        isSent: false,
+        searchResults
+      }]);
+    } catch (error) {
+      // Add error message
+      setMessages(prev => [...prev, { 
+        text: "Sorry, I encountered an error while searching. Please try again.", 
         isSent: false 
       }]);
-    }, 1000);
+      console.error('Error in semantic search:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   return (
@@ -35,7 +53,7 @@ const Chat: React.FC<ChatProps> = () => {
         <div className="flex-1 overflow-hidden">
           <ChatBody messages={messages} />
         </div>
-        <ChatFooter onSendMessage={handleSendMessage} />
+        <ChatFooter onSendMessage={handleSendMessage} isLoading={isLoading} />
       </div>
     </div>
   );

@@ -12,7 +12,7 @@ const UserMessage: React.FC<UserMessageProps> = ({ text }) => (
     animate={{ x: 0, opacity: 1 }}
     transition={{ duration: 0.15 }}
   >
-    <p className="text-sm">{text}</p>
+    <p className="text-left text-sm">{text}</p>
   </motion.div>
 );
 

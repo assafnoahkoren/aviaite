@@ -11,11 +11,11 @@ class PostgresClient:
                  user: str = os.getenv('POSTGRES_USER', 'postgres'),
                  password: str = os.getenv('POSTGRES_PASSWORD', 'postgres')):
         self.connection_params = {
-            'host': host,
-            'port': port,
-            'database': database,
-            'user': user,
-            'password': password
+            'host': 'ep-winter-darkness-a2mwfp0o-pooler.eu-central-1.aws.neon.tech',
+            'port': '5432',
+            'database': 'aviaite',
+            'user': 'aviaite_owner',
+            'password': 'npg_cYwGqZV4ku1C'
         }
         self.conn = None
         self.cursor = None

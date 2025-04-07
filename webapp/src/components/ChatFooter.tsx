@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
-import { IconSend } from '@tabler/icons-react';
+import { IconSend, IconLoader2 } from '@tabler/icons-react';
 import './ChatFooter.scss';
 
 interface ChatFooterProps {
   onSendMessage?: (message: string) => void;
+  isLoading?: boolean;
 }
 
-const ChatFooter: React.FC<ChatFooterProps> = ({ onSendMessage }) => {
+const ChatFooter: React.FC<ChatFooterProps> = ({ onSendMessage, isLoading = false }) => {
   const [message, setMessage] = useState('');
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (message.trim() && onSendMessage) {
+    if (message.trim() && onSendMessage && !isLoading) {
       onSendMessage(message);
       setMessage('');
     }
@@ -26,12 +27,18 @@ const ChatFooter: React.FC<ChatFooterProps> = ({ onSendMessage }) => {
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Ask anything..."
           className="message-input"
+          disabled={isLoading}
         />
         <button 
           type="submit"
           className="send-button"
+          disabled={isLoading}
         >
-          <IconSend size={20} />
+          {isLoading ? (
+            <IconLoader2 size={20} className="animate-spin" />
+          ) : (
+            <IconSend size={20} />
+          )}
         </button>
       </form>
     </div>
