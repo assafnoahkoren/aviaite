@@ -34,3 +34,6 @@ coverage.xml
 # OS specific files
 .DS_Store
 Thumbs.db 
+
+# Docker
+server/data/
