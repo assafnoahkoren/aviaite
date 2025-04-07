@@ -3,11 +3,11 @@
 }
 
 .message-input {
-  @apply flex-1 px-4 py-3 text-sm bg-gray-1 dark:bg-gray-900 border-0 rounded-full placeholder:text-gray-400 focus:outline-none transition-all duration-200 ease-in-out dark:text-white;
+  @apply flex-1 px-4 py-3 text-sm bg-gray-1 dark:bg-gray-900 border-0 rounded-full placeholder:text-gray-400 focus:outline-none transition-all duration-100 ease-in-out dark:text-white;
 }
 
 .send-button {
-  @apply bg-blue-500 hover:bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 border-none;
+  @apply bg-blue-500 hover:bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-100 border-none;
 }
 
 .message-form {
