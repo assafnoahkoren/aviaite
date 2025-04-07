@@ -34,6 +34,24 @@ def get_file_from_path(file_path: str) -> Path:
     print(f"Found file: {path.absolute()}")
     return path
 
+def print_file_size(file: Path) -> None:
+	"""
+	Print the file size in human readable format.
+	
+	Args:
+		file (Path): Path object of the file
+	"""
+	file_size = file.stat().st_size
+	
+	# Convert to human readable format
+	def convert_size(size_bytes):
+		for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+			if size_bytes < 1024.0:
+				return f"{size_bytes:.2f} {unit}"
+			size_bytes /= 1024.0
+	
+	print(f"File size: {convert_size(file_size)}")
+        
 def main(file_path: str):
     """
     Process and upload a file to PostgreSQL.
@@ -42,11 +60,12 @@ def main(file_path: str):
         file_path (str): Path to the file to be processed and uploaded
     """
     file = get_file_from_path(file_path)
+    print_file_size(file)
     
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process and upload a file to PostgreSQL')
-    parser.add_argument('file_path', type=str, help='Path to the file to be processed and uploaded')
+    parser.add_argument('--file_path', type=str, help='Path to the file to be processed and uploaded', default='C:/Users/asafk/Downloads/NAT DOC 007_Eff.20MAR2025.pdf')
     
     args = parser.parse_args()
     main(args.file_path)
