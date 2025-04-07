@@ -304,7 +304,7 @@ def generate_embeddings(chunks: List[str], model_name: str = 'BAAI/bge-large-en-
     
     return padded_embeddings
 
-def preprocess_document(file_path: Path, chunk_size: int = 1000, overlap: int = 100) -> ProcessedDocument:
+def preprocess_document(file_path: Path, chunk_size: int = 1000, overlap: int = 500) -> ProcessedDocument:
     """
     Preprocess a document for RAG.
     

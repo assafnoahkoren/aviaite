@@ -7,9 +7,9 @@ class PostgresClient:
     def __init__(self, 
                  host: str = os.getenv('POSTGRES_HOST', 'localhost'),
                  port: int = int(os.getenv('POSTGRES_PORT', '5432')),
-                 database: str = os.getenv('POSTGRES_DB', 'postgres'),
+                 database: str = os.getenv('POSTGRES_DB', 'aviaite'),
                  user: str = os.getenv('POSTGRES_USER', 'postgres'),
-                 password: str = os.getenv('POSTGRES_PASSWORD', '')):
+                 password: str = os.getenv('POSTGRES_PASSWORD', 'postgres')):
         self.connection_params = {
             'host': host,
             'port': port,
@@ -23,6 +23,10 @@ class PostgresClient:
     def connect(self) -> None:
         """Establish connection to the PostgreSQL database."""
         try:
+            # Print connection string (without password)
+            safe_params = self.connection_params.copy()
+            safe_params['password'] = '***' if safe_params['password'] else ''
+            print(f"Connecting to PostgreSQL database: postgresql://{safe_params['user']}:{safe_params['password']}@{safe_params['host']}:{safe_params['port']}/{safe_params['database']}")
             self.conn = psycopg2.connect(**self.connection_params)
             self.cursor = self.conn.cursor(cursor_factory=RealDictCursor)
         except Exception as e:
