@@ -1,9 +1,12 @@
+import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict, Any
 from src.semantic_search import SemanticSearchClient
+from anthropic import Anthropic
 import json
+from dotenv import load_dotenv
 
 app = FastAPI(
     title="Aviaite API",
@@ -22,6 +25,11 @@ app.add_middleware(
 
 # Initialize the semantic search client (reuse the same instance)
 semantic_client = SemanticSearchClient()
+load_dotenv()
+print(f"Anthropic API Key: {os.getenv('ANTHROPIC_API_KEY')}")
+anthropic_client = Anthropic(
+    api_key=os.getenv('ANTHROPIC_API_KEY')
+)
 
 class SearchQuery(BaseModel):
     """Model for semantic search requests"""
@@ -41,17 +49,18 @@ class SearchResponse(BaseModel):
     results: List[SearchResult]
     total_results: int
     query: str
+    analysis: Dict[str, Any]
 
 @app.post("/api/search", response_model=SearchResponse)
 async def semantic_search(search_request: SearchQuery):
     """
-    Perform semantic search on the document chunks.
+    Perform semantic search on the document chunks and analyze results using Claude.
     
     Args:
         search_request (SearchQuery): The search request containing the query and parameters
         
     Returns:
-        SearchResponse: The search results with metadata
+        SearchResponse: The search results with metadata and Claude's analysis
     """
     try:
         # Perform the search
@@ -71,11 +80,42 @@ async def semantic_search(search_request: SearchQuery):
             )
             for result in results
         ]
+
+        # Prepare context for Claude
+        context = "\n\n".join([
+            f"Document {r.chunk_id} (similarity: {r.similarity:.2f}):\n{r.chunk_text}"
+            for r in search_results
+        ])
+        
+        # Get analysis from Claude
+        message = anthropic_client.messages.create(
+            model="claude-3-sonnet-20240229",
+            max_tokens=1000,
+            temperature=0.2,
+            messages=[{
+                "role": "user",
+                "content": f"""Based on the following search results for the query "{search_request.query}",
+                formart the answer like this:
+                {{
+                    "answer": string,
+                }}
+                provide a concise (4 lines maximum, 2 lines is ideal) analysis and summary of the relevant information (PLEASE GIVEN BACK THE ANSWER WITHOUT ANY OTHER TEXT) :
+
+                {context}"""
+            }]
+        )
+        
+        # Extract the text content from Claude's response
+        try:
+            analysis_json = json.loads(message.content[0].text) if message.content else {"answer": "No analysis available", "chunk_ids": []}
+        except json.JSONDecodeError:
+            analysis_text = "Error parsing analysis response"
         
         return SearchResponse(
             results=search_results,
             total_results=len(search_results),
-            query=search_request.query
+            query=search_request.query,
+            analysis=analysis_json
         )
         
     except Exception as e:
@@ -95,4 +135,5 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000) 
