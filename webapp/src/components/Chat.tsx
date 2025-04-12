@@ -11,29 +11,44 @@ interface Message {
   searchResults?: SemanticSearchResponse;
 }
 
-interface ChatProps {
-  // Add props here as needed
-}
+interface ChatProps {}
 
 const Chat: React.FC<ChatProps> = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentStreamingMessage, setCurrentStreamingMessage] = useState<string>('');
   
   const handleSendMessage = async (message: string) => {
     // Add user message
     setMessages(prev => [...prev, { text: message, isSent: true }]);
     setIsLoading(true);
+    setCurrentStreamingMessage('');
 
     try {
-      // Get semantic search results
-      const searchResults = await SemanticSearchService.search(message);
-      
-      // Add bot response with search results
+      // Add initial bot message with empty text
       setMessages(prev => [...prev, { 
-        text: searchResults.analysis.answer || "I couldn't find a specific answer to your question.", 
-        isSent: false,
-        searchResults
+        text: '', 
+        isSent: false 
       }]);
+
+      // Start streaming search
+      await SemanticSearchService.stream_search(
+        message,
+        (chunk) => {
+          console.log(chunk);
+          
+          setCurrentStreamingMessage(prev => prev + chunk);
+          // Update the last message (bot's message) with the accumulated text
+          setMessages(prev => {
+            const newMessages = [...prev];
+            const lastMessage = newMessages[newMessages.length - 1];
+            if (lastMessage && !lastMessage.isSent) {
+              lastMessage.text = currentStreamingMessage + chunk;
+            }
+            return newMessages;
+          });
+        }
+      );
     } catch (error) {
       // Add error message
       setMessages(prev => [...prev, { 
@@ -43,6 +58,7 @@ const Chat: React.FC<ChatProps> = () => {
       console.error('Error in semantic search:', error);
     } finally {
       setIsLoading(false);
+      setCurrentStreamingMessage('');
     }
   };
   

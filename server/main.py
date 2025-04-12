@@ -1,12 +1,14 @@
 import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import List, Dict, Any
 from src.semantic_search import SemanticSearchClient
 from anthropic import Anthropic
 import json
 from dotenv import load_dotenv
+from src.ask_your_pdf_client import AskYourPdfClient
 
 app = FastAPI(
     title="Aviaite API",
@@ -31,6 +33,9 @@ anthropic_client = Anthropic(
     api_key=os.getenv('ANTHROPIC_API_KEY')
 )
 
+# Initialize AskYourPdf client
+ask_your_pdf_client = AskYourPdfClient()
+
 class SearchQuery(BaseModel):
     """Model for semantic search requests"""
     query: str
@@ -50,6 +55,13 @@ class SearchResponse(BaseModel):
     total_results: int
     query: str
     analysis: Dict[str, Any]
+
+class KnowledgeBaseQuery(BaseModel):
+    """Model for knowledge base queries"""
+    query: str
+    temperature: float = 0.7
+    language: str = "ENGLISH"
+    length: str = "SHORT"
 
 @app.post("/api/search", response_model=SearchResponse)
 async def semantic_search(search_request: SearchQuery):
@@ -122,6 +134,38 @@ async def semantic_search(search_request: SearchQuery):
         raise HTTPException(
             status_code=500,
             detail=f"Error performing semantic search: {str(e)}"
+        )
+
+@app.post("/api/ask")
+async def ask_knowledge_base(query: KnowledgeBaseQuery):
+    """
+    Query the knowledge base with streaming response.
+    
+    Args:
+        query (KnowledgeBaseQuery): The query containing the question and parameters
+        
+    Returns:
+        StreamingResponse: A streaming response with the answer chunks
+    """
+    try:
+        async def generate():
+            for chunk in ask_your_pdf_client.ask_knowledge_base(
+                query=query.query,
+                temperature=0.7,
+                language="ENGLISH",
+                length="SHORT"
+            ):
+                yield chunk
+
+        return StreamingResponse(
+            generate(),
+            media_type="text/plain"
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error querying knowledge base: {str(e)}"
         )
 
 @app.get("/")
