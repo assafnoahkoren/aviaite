@@ -139,28 +139,22 @@ async def semantic_search(search_request: SearchQuery):
 @app.post("/api/ask")
 async def ask_knowledge_base(query: KnowledgeBaseQuery):
     """
-    Query the knowledge base with streaming response.
+    Query the knowledge base.
     
     Args:
         query (KnowledgeBaseQuery): The query containing the question and parameters
         
     Returns:
-        StreamingResponse: A streaming response with the answer chunks
+        str: The complete response from the knowledge base
     """
     try:
-        async def generate():
-            for chunk in ask_your_pdf_client.ask_knowledge_base(
-                query=query.query,
-                temperature=0.7,
-                language="ENGLISH",
-                length="SHORT"
-            ):
-                yield chunk
-
-        return StreamingResponse(
-            generate(),
-            media_type="text/plain"
+        response = ask_your_pdf_client.ask_knowledge_base(
+            query=query.query,
+            temperature=0.7,
+            language="ENGLISH",
+            length="SHORT"
         )
+        return response
         
     except Exception as e:
         raise HTTPException(

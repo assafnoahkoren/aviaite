@@ -25,13 +25,12 @@ export class SemanticSearchService {
     }
   }
 
-  static async stream_search(
+  static async ask_knowledge_base(
     query: string,
-    onChunk: (chunk: string) => void,
     temperature: number = 0.7,
     language: string = "ENGLISH",
     length: string = "SHORT"
-  ): Promise<void> {
+  ): Promise<string> {
     try {
       const response = await fetch(`${API_BASE_URL}/api/ask`, {
         method: 'POST',
@@ -50,25 +49,9 @@ export class SemanticSearchService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      if (!response.body) {
-        throw new Error('Response body is null');
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-
-      while (true) {
-        const { done, value } = await reader.read();
-        
-        if (done) {
-          break;
-        }
-
-        const chunk = decoder.decode(value);
-        onChunk(chunk);
-      }
+      return await response.text();
     } catch (error) {
-      console.error('Error performing streaming search:', error);
+      console.error('Error querying knowledge base:', error);
       throw error;
     }
   }

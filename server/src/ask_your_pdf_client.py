@@ -1,6 +1,6 @@
 import os
 import requests
-from typing import List, Dict, Any, Generator
+from typing import List, Dict, Any
 from dotenv import load_dotenv
 
 class AskYourPdfClient:
@@ -19,8 +19,8 @@ class AskYourPdfClient:
             'Content-Type': 'application/json'
         }
 
-    def ask_knowledge_base(self, query: str, stream: bool = True, temperature: float = 0.7, 
-                          language: str = "ENGLISH", length: str = "SHORT") -> Generator[str, None, None]:
+    def ask_knowledge_base(self, query: str, temperature: float = 0.7, 
+                          language: str = "ENGLISH", length: str = "SHORT") -> str:
         url = f"{self.base_url}/knowledge_base_chat"
         
         payload = {
@@ -34,17 +34,16 @@ class AskYourPdfClient:
         }
         
         params = {
-            "stream": stream,
+            "stream": False,
             "temperature": temperature,
             "language": language,
-            "length": length
+            "length": length,
+            "cite_source": True
         }
         
-        with requests.post(url, headers=self.headers, json=payload, params=params, stream=True) as response:
-            response.raise_for_status()
-            for line in response.iter_lines():
-                if line:
-                    yield line.decode('utf-8')
+        response = requests.post(url, headers=self.headers, json=payload, params=params)
+        response.raise_for_status()
+        return response.text
 
 
 def main():
@@ -60,10 +59,9 @@ def main():
         query = "When should I send the RCL message?"
         print(f"Query: {query}")
         
-        print("\nResponse (streaming):")
-        for chunk in client.ask_knowledge_base(query):
-            print(chunk, end='', flush=True)
-        print()  # New line after streaming
+        print("\nResponse:")
+        response = client.ask_knowledge_base(query)
+        print(response)
         
     except Exception as e:
         print(f"Error: {e}")
