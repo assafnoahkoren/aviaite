@@ -3,9 +3,9 @@ import ChatBody from './ChatBody';
 import ChatFooter from './ChatFooter';
 import ChatHeader from './ChatHeader';
 import { SemanticSearchService } from '../services/semanticSearchService';
-import type { SemanticSearchResponse } from '../types/semanticSearch';
+import type { SemanticSearchResponse, Message as KBMessage } from '../types/semanticSearch';
 
-interface Message {
+interface ChatMessage {
   text: string;
   isSent: boolean;
   searchResults?: SemanticSearchResponse;
@@ -14,7 +14,7 @@ interface Message {
 interface ChatProps {}
 
 const Chat: React.FC<ChatProps> = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
   const handleSendMessage = async (message: string) => {
@@ -37,7 +37,7 @@ const Chat: React.FC<ChatProps> = () => {
         const newMessages = [...prev];
         const lastMessage = newMessages[newMessages.length - 1];
         if (lastMessage && !lastMessage.isSent) {
-          lastMessage.text = response;
+          lastMessage.text = response.answer.message;
         }
         return newMessages;
       });

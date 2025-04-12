@@ -35,4 +35,16 @@ export interface SemanticSearchResponse {
   total_results: number;
   query: string;
   analysis: SearchAnalysis;
+}
+
+export interface Message {
+    sender: string;
+    message: string;
+    type: string;
+}
+
+export interface KnowledgeBaseResponse {
+    question: Message;
+    answer: Message;
+    created: string;
 } 

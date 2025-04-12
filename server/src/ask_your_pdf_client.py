@@ -43,7 +43,7 @@ class AskYourPdfClient:
         
         response = requests.post(url, headers=self.headers, json=payload, params=params)
         response.raise_for_status()
-        return response.text
+        return response.json()
 
 
 def main():

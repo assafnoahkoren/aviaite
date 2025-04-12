@@ -1,4 +1,4 @@
-import { SemanticSearchResponse } from '../types/semanticSearch';
+import { SemanticSearchResponse, KnowledgeBaseResponse } from '../types/semanticSearch';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -30,7 +30,7 @@ export class SemanticSearchService {
     temperature: number = 0.7,
     language: string = "ENGLISH",
     length: string = "SHORT"
-  ): Promise<string> {
+  ): Promise<KnowledgeBaseResponse> {
     try {
       const response = await fetch(`${API_BASE_URL}/api/ask`, {
         method: 'POST',
@@ -49,7 +49,7 @@ export class SemanticSearchService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      return await response.text();
+      return await response.json();
     } catch (error) {
       console.error('Error querying knowledge base:', error);
       throw error;
