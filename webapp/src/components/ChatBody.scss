@@ -16,6 +16,10 @@
   height: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+
+  .message-sent:first-of-type {
+    margin-top: 1rem;
+  }
 }
 
 .gradient-overlay {

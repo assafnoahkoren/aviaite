@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import UserMessage from './UserMessage';
 import BotMessage from './BotMessage';
+import WelcomePage from './WelcomePage';
 import './ChatBody.scss';
 
 interface Message {
@@ -25,17 +26,13 @@ const ChatBody: React.FC<ChatBodyProps> = ({ messages = [] }) => {
     <div className="chat-container">
       <div className="chat-body hide-scrollbar" ref={chatBodyRef}>
         {messages.length === 0 ? (
-          <>
-            {/* Placeholder message examples */}
-            <BotMessage text="Hello! How can I help you today?" />
-            <UserMessage text="I'm just checking out this new chat component!" />
-          </>
+          <WelcomePage />
         ) : (
           <>
             {messages.map((message, index) => (
               message.isSent ? 
                 <UserMessage key={index} text={message.text} /> : 
-                <BotMessage key={index} text={message.text} />
+                message.text ? <BotMessage key={index} text={message.text} /> : null
             ))}
           </>
         )}

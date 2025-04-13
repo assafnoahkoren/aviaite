@@ -23,6 +23,7 @@ const ChatFooter: React.FC<ChatFooterProps> = ({ onSendMessage, isLoading = fals
       <form onSubmit={handleSubmit} className="message-form">
         <input
           type="text"
+          id="message-input"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Ask anything..."

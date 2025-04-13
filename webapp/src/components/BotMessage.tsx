@@ -2,6 +2,7 @@ import React from 'react';
 import type { SemanticSearchResponse } from '../types/semanticSearch';
 import Markdown from 'react-markdown'
 import { IconBook, IconBook2, IconFileText } from '@tabler/icons-react';
+import { motion } from 'framer-motion';
 
 interface Source {
   page: number;
@@ -48,11 +49,16 @@ const BotMessage: React.FC<BotMessageProps> = ({ text, searchResults }) => {
   const { answer, sources } = parseMessage(text);
   
   return (
-    <div className="flex flex-col p-4">
-      <div className="bg-blue-200 dark:bg-blue-900 px-3 rounded-t-lg max-w-[90%] self-start">
-        <p className="text-left text-gray-800 dark:text-gray-200">
+    <motion.div
+      initial={{ x: -100, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      transition={{ duration: 0.15 }}
+      className="flex flex-col p-4"
+    >
+      <div className={`bg-blue-200 dark:bg-blue-900 px-3 ${sources.length === 0 ? 'rounded-lg' : 'rounded-t-lg'} max-w-[90%] self-start`}>
+        <div className="text-left text-gray-800 dark:text-gray-200">
           <Markdown>{answer}</Markdown>
-        </p>
+        </div>
       </div>
       {sources.length > 0 && (
         <div className="bg-blue-100 dark:bg-gray-800 px-3 rounded-b-lg max-w-[90%] self-start">
@@ -73,7 +79,7 @@ const BotMessage: React.FC<BotMessageProps> = ({ text, searchResults }) => {
           ))}
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 

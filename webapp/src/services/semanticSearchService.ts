@@ -38,7 +38,7 @@ export class SemanticSearchService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          query,
+          query: query + ' - attach sources',
           temperature,
           language,
           length
