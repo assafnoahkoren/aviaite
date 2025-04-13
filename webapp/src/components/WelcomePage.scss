@@ -1,5 +1,5 @@
 .welcome-page {
-  @apply flex flex-col gap-8 p-4 mx-auto h-full justify-between;
+  @apply flex flex-col gap-8 p-4 mx-auto h-full justify-between w-full;
   
   .welcome-content {
     @apply text-center;
@@ -23,7 +23,7 @@
       
       .question-chip {
         @apply px-4 py-2 rounded-full bg-gray-100 border-none cursor-pointer 
-               text-sm text-gray-500 whitespace-nowrap transition-all duration-200;
+               text-sm text-gray-500 transition-all duration-200 text-align-start;
         
         &:hover {
           @apply bg-gray-200 -translate-y-0.5;
