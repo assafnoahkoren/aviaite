@@ -1,60 +1,38 @@
 .welcome-page {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  padding: 2rem;
-  max-width: 800px;
-  margin: 0 auto;
+  @apply flex flex-col gap-8 p-4 mx-auto h-full justify-between;
   
   .welcome-content {
-    text-align: center;
+    @apply text-center;
     
     h1 {
-      font-size: 2.5rem;
-      margin-bottom: 1rem;
-      color: #333;
+      @apply text-4xl mb-4 text-gray-700;
     }
     
     .explanation {
-      font-size: 1.1rem;
-      color: #666;
-      line-height: 1.6;
+      @apply text-lg text-gray-600 leading-relaxed;
     }
   }
   
   .sample-questions {
     h2 {
-      font-size: 1.5rem;
-      margin-bottom: 1rem;
-      color: #333;
+      @apply text-sm mb-4 text-gray-400 text-start font-400;
     }
     
     .chips-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      justify-content: center;
+      @apply flex flex-wrap gap-2 justify-start;
       
       .question-chip {
-        padding: 0.35rem 0.75rem;
-        border-radius: 15px;
-        background-color: #f0f0f0;
-        border: none;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        font-size: 0.85rem;
-        color: #333;
-        white-space: nowrap;
+        @apply px-4 py-2 rounded-full bg-gray-100 border-none cursor-pointer 
+               text-sm text-gray-500 whitespace-nowrap transition-all duration-200;
         
         &:hover {
-          background-color: #e0e0e0;
-          transform: translateY(-1px);
+          @apply bg-gray-200 -translate-y-0.5;
         }
         
         &:active {
-          transform: translateY(0);
+          @apply translate-y-0;
         }
       }
     }
   }
-} 
+}

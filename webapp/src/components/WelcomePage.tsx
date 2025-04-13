@@ -41,16 +41,16 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ onQuestionSelect }) => {
 
   return (
     <div className="welcome-page">
-      <div className="welcome-content">
-        <h1>Welcome to Our Assistant</h1>
-        <p className="explanation">
-          I'm here to help you learn more about our platform. Feel free to ask me anything,
-          or try one of the sample questions below to get started.
-        </p>
+      <div className="welcome-content text-gray-500 bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
+			Welcome to your flight guide. Feel free to ask me anything.
       </div>
       
       <div className="sample-questions">
-        <h2>Try asking me:</h2>
+        <div className="flex items-center gap-4 my-2">
+          <div className="h-px flex-1 bg-gray-300 dark:bg-gray-600"></div>
+          <h2>Try asking me</h2>
+          <div className="h-px flex-1 bg-gray-300 dark:bg-gray-600"></div>
+        </div>
         <div className="chips-container">
           {sampleQuestions.map((question, index) => (
             <button
