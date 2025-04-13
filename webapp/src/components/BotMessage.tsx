@@ -1,7 +1,7 @@
 import React from 'react';
 import type { SemanticSearchResponse } from '../types/semanticSearch';
 import Markdown from 'react-markdown'
-import { IconBook, IconBook2, IconFileText } from '@tabler/icons-react';
+import { IconBook2, IconFileText } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 
 interface Source {
@@ -45,7 +45,7 @@ const parseMessage = (text: string | undefined): { answer: string; sources: Sour
   };
 };
 
-const BotMessage: React.FC<BotMessageProps> = ({ text, searchResults }) => {
+const BotMessage: React.FC<BotMessageProps> = ({ text }) => {
   const { answer, sources } = parseMessage(text);
   
   return (

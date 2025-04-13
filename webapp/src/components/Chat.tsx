@@ -3,7 +3,7 @@ import ChatBody from './ChatBody';
 import ChatFooter from './ChatFooter';
 import ChatHeader from './ChatHeader';
 import { SemanticSearchService } from '../services/semanticSearchService';
-import type { SemanticSearchResponse, Message as KBMessage } from '../types/semanticSearch';
+import type { SemanticSearchResponse } from '../types/semanticSearch';
 
 interface ChatMessage {
   text: string;

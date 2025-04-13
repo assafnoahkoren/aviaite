@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import './WelcomePage.scss';
 
 interface WelcomePageProps {
@@ -14,7 +14,6 @@ const sampleQuestions = [
 ];
 
 const WelcomePage: React.FC<WelcomePageProps> = ({ onQuestionSelect }) => {
-  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const handleQuestionSelect = (question: string) => {
     const inputElement = document.getElementById('message-input') as HTMLInputElement;
