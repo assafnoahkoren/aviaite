@@ -73,7 +73,7 @@ const BotMessage: React.FC<BotMessageProps> = ({ text }) => {
           {sources.map((source, index) => (
             <div key={index} className="mt-1">
               <p className="text-left text-gray-600 dark:text-gray-300 text-sm">
-                <IconFileText size={14} className="inline-block mr-1 relative top-0.5" /><b>{source.page}</b>: "{source.quote}"
+                <IconFileText size={14} className="inline-block mr-1 relative top-0.5" /><b>{source.page - 1}</b>: "{source.quote}"
               </p>
             </div>
           ))}
