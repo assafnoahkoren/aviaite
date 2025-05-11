@@ -38,7 +38,7 @@ export class SemanticSearchService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          query: query + ' - attach sources and make sure to start the sources with "SOURCES:"',
+          query: query,
           temperature,
           language,
           length

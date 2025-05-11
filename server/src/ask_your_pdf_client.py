@@ -21,10 +21,9 @@ class AskYourPdfClient:
 
     def ask_knowledge_base(self, query: str, temperature: float = 0.7, 
                           language: str = "ENGLISH", length: str = "SHORT") -> str:
-        url = f"{self.base_url}/knowledge_base_chat"
+        url = f"{self.base_url}/knowledge/{self.knowledge_base_id}/chat"
         
         payload = {
-            "documents": ["f64ec15d-8420-4245-a463-297ca89b44cf"],
             "messages": [
                 {
                     "sender": "user",
